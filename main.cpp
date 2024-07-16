@@ -1,56 +1,36 @@
-#include <SDL2/SDL.h>  
-#include <stdio.h>
+#include <windows.h>  
+#include <SDL2/SDL.h>   
+#include <SDL2/SDL_image.h>  
+#include <string>  
 
-int WinMain(int argc, char* argv[]) {  
-    SDL_Window* window = NULL;  
-    SDL_Renderer* renderer = NULL;  
+SDL_Surface* LoadImage(std::string file_path) {  
+    SDL_Surface* loadimage = IMG_Load(file_path.c_str());  
+    SDL_Surface* optimize_image = NULL;  
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {  
-        printf("SDL initialization failed: %s\n", SDL_GetError());  
-        return 1;  
+    if (loadimage != NULL) {  
+        optimize_image = SDL_ConvertSurface(loadimage, loadimage->format, 0);  
+        SDL_FreeSurface(loadimage);  
     }  
 
-    window = SDL_CreateWindow("Pong Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1200, 600, 0);  
-    if (window == NULL) {  
-        printf("Error creating window: %s\n", SDL_GetError());  
-        return 1;  
-    }  
+    return optimize_image;  
+}  
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);  
-    if (renderer == NULL) {  
-        printf("Error creating renderer: %s\n", SDL_GetError());  
-        return 1;  
-    }  
+int main(int argc, char* argv[]) {  
+    SDL_Surface* image;  
+    SDL_Window* window;  
+    SDL_Surface* screen;  
 
-    // Load and display background image  
-    SDL_Surface* bg_surface = SDL_LoadBMP("back.bmp");  
-    if (bg_surface == NULL) {  
-        printf("Error loading background image: %s\n", SDL_GetError());  
-        return 1;  
-    }  
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) return 1;  
 
-    SDL_Texture* bg_texture = SDL_CreateTextureFromSurface(renderer, bg_surface);  
-    SDL_RenderCopy(renderer, bg_texture, NULL, NULL);  
-    SDL_RenderPresent(renderer);  
+    window = SDL_CreateWindow("Gameplay Plane", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1200, 600, SDL_WINDOW_SHOWN);  
+    screen = SDL_GetWindowSurface(window);  
+    image = LoadImage("bgplane.png");  
 
-    // Main game loop  
-    bool quit = false;  
-    while (!quit) {  
-        // Game logic and rendering  
+    SDL_BlitSurface(image, NULL, screen, NULL);  
 
-        // Handle events  
-        SDL_Event event;  
-        while (SDL_PollEvent(&event)) {  
-            if (event.type == SDL_QUIT) {  
-                quit = true;  
-            }  
-        }  
-    }  
-
-    // Clean up resources  
-    SDL_FreeSurface(bg_surface);  
-    SDL_DestroyTexture(bg_texture);  
-    SDL_DestroyRenderer(renderer);  
+    SDL_UpdateWindowSurface(window);  
+    SDL_Delay(5000);  
+    SDL_FreeSurface(image);  
     SDL_DestroyWindow(window);  
     SDL_Quit();  
 
