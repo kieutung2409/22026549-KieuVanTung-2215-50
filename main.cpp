@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) return 1;  
 
-    window = SDL_CreateWindow("Gameplay Plane", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1200, 600, SDL_WINDOW_SHOWN);  
+    window = SDL_CreateWindow("Gameplay War Plane", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1200, 600, SDL_WINDOW_SHOWN);  
     screen = SDL_GetWindowSurface(window);  
     image = LoadImage("bgplane.png");  
 
