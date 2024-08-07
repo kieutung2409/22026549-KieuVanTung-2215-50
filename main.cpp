@@ -1,7 +1,9 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include <iostream>
 #include <vector>
-#include <cstdlib> // Để sử dụng rand()
+#include <cstdlib>
+#include <string>
 
 // Kích thước cửa sổ
 const int WINDOW_WIDTH = 1380;
@@ -15,21 +17,36 @@ const int PLANE_HEIGHT = 50;
 const int INITIAL_ROCK_SPEED = 3;
 
 // Tốc độ tối đa của tảng đá
-const int MAX_ROCK_SPEED = 10;
+const int MAX_ROCK_SPEED = 14;
 
 // Tốc độ tăng dần của tảng đá
 const int ROCK_SPEED_INCREMENT = 1;
 
 // Số lượng tảng đá di chuyển
-const int NUM_ROCKS = 5;
+const int NUM_ROCKS = 6;
 
 // Tốc độ di chuyển của máy bay điều khiển
-const int CONTROL_PLANE_SPEED = 10;
+const int CONTROL_PLANE_SPEED = 15;
 
 struct Plane {
     SDL_Rect rect;
     int speed;
 };
+
+// Hàm để vẽ văn bản lên màn hình
+void renderText(SDL_Renderer* renderer, TTF_Font* font, const std::string &text, int x, int y) {
+    SDL_Color White = {255, 255, 255}; 
+    SDL_Surface* surfaceMessage = TTF_RenderText_Solid(font, text.c_str(), White); 
+    SDL_Texture* message = SDL_CreateTextureFromSurface(renderer, surfaceMessage); 
+    SDL_Rect message_rect; 
+    message_rect.x = x;  
+    message_rect.y = y; 
+    message_rect.w = surfaceMessage->w; 
+    message_rect.h = surfaceMessage->h; 
+    SDL_RenderCopy(renderer, message, NULL, &message_rect); 
+    SDL_DestroyTexture(message);
+    SDL_FreeSurface(surfaceMessage);
+}
 
 bool checkCollision(const SDL_Rect &a, const SDL_Rect &b) {
     return SDL_HasIntersection(&a, &b);
@@ -39,6 +56,13 @@ int main(int argc, char* argv[]) {
     // Khởi tạo SDL
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
+    // Khởi tạo SDL_ttf
+    if (TTF_Init() == -1) {
+        std::cerr << "TTF_Init: " << TTF_GetError() << std::endl;
+        SDL_Quit();
         return 1;
     }
 
@@ -72,6 +96,18 @@ int main(int argc, char* argv[]) {
     // Tạo texture từ hình ảnh nền
     SDL_Texture* backgroundTexture = SDL_CreateTextureFromSurface(renderer, backgroundSurface);
     SDL_FreeSurface(backgroundSurface);
+
+    // Tải phông chữ
+    TTF_Font* font = TTF_OpenFont("Open_Sans/OpenSans-Regular.ttf", 24); 
+    if (font == nullptr) {
+        std::cerr << "Failed to load font! SDL_ttf Error: " << TTF_GetError() << std::endl;
+        SDL_DestroyTexture(backgroundTexture);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        TTF_Quit();
+        SDL_Quit();
+        return 1;
+    }
 
     // Tải hình ảnh máy bay điều khiển
     SDL_Surface* myPlaneSurface = SDL_LoadBMP("myplane.bmp");
@@ -115,6 +151,9 @@ int main(int argc, char* argv[]) {
         rock.speed = INITIAL_ROCK_SPEED;
         movingRocks.push_back(rock);
     }
+
+    // Thời gian bắt đầu
+    Uint32 startTime = SDL_GetTicks();
 
     // Vòng lặp trò chơi
     bool quit = false;
@@ -174,6 +213,11 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        // Tính thời gian đã trôi qua và hiển thị điểm
+        Uint32 currentTime = SDL_GetTicks();
+        Uint32 elapsedTime = (currentTime - startTime) / 1000;
+        std::string scoreText = "Score: " + std::to_string(elapsedTime);
+
         // Xóa màn hình
         SDL_RenderClear(renderer);
 
@@ -189,6 +233,9 @@ int main(int argc, char* argv[]) {
         // Vẽ máy bay điều khiển
         SDL_RenderCopy(renderer, myPlaneTexture, nullptr, &myPlaneRect);
 
+        // Hiển thị điểm
+        renderText(renderer, font, scoreText, 10, 10);
+
         // Cập nhật màn hình
         SDL_RenderPresent(renderer);
 
@@ -203,8 +250,10 @@ int main(int argc, char* argv[]) {
     SDL_DestroyTexture(rockTexture);
     SDL_DestroyTexture(myPlaneTexture);
     SDL_DestroyTexture(backgroundTexture);
+    TTF_CloseFont(font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    TTF_Quit();
     SDL_Quit();
 
     return 0;
