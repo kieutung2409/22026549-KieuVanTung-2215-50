@@ -10,23 +10,23 @@ const int WINDOW_WIDTH = 1380;
 const int WINDOW_HEIGHT = 773;
 
 // Kích thước máy bay
-const int PLANE_WIDTH = 60;
-const int PLANE_HEIGHT = 60;
+const int PLANE_WIDTH = 50;
+const int PLANE_HEIGHT = 50;
 
 // Tốc độ di chuyển ban đầu của tảng đá
 const int INITIAL_ROCK_SPEED = 3;
 
 // Tốc độ tối đa của tảng đá
-const int MAX_ROCK_SPEED = 15;
+const int MAX_ROCK_SPEED = 10;
 
 // Tốc độ tăng dần của tảng đá
 const int ROCK_SPEED_INCREMENT = 1;
 
 // Số lượng tảng đá di chuyển
-const int NUM_ROCKS = 6;
+const int NUM_ROCKS = 5;
 
 // Tốc độ di chuyển của máy bay điều khiển
-const int CONTROL_PLANE_SPEED = 15;
+const int CONTROL_PLANE_SPEED = 10;
 
 // Kích thước nút
 const int BUTTON_WIDTH = 200;
@@ -42,7 +42,7 @@ SDL_Rect myPlaneRect;
 std::vector<Plane> movingRocks;
 bool gameOver = false;
 Uint32 startTime;
-Uint32 endTime;
+Uint32 endTime; // Thêm biến để lưu thời điểm kết thúc trò chơi
 
 // Hàm để vẽ văn bản lên màn hình
 void renderText(SDL_Renderer* renderer, TTF_Font* font, const std::string &text, int x, int y) {
@@ -208,22 +208,20 @@ int main(int argc, char* argv[]) {
             if (e.type == SDL_QUIT) {
                 quit = true;
             }
-            else if (e.type == SDL_KEYDOWN) {
-                if (!gameOver) {
-                    switch (e.key.keysym.sym) {
-                        case SDLK_UP:
-                            myPlaneRect.y -= CONTROL_PLANE_SPEED;
-                            break;
-                        case SDLK_DOWN:
-                            myPlaneRect.y += CONTROL_PLANE_SPEED;
-                            break;
-                        case SDLK_LEFT:
-                            myPlaneRect.x -= CONTROL_PLANE_SPEED;
-                            break;
-                        case SDLK_RIGHT:
-                            myPlaneRect.x += CONTROL_PLANE_SPEED;
-                            break;
-                    }
+            else if (e.type == SDL_KEYDOWN && !gameOver) {
+                switch (e.key.keysym.sym) {
+                    case SDLK_UP:
+                        myPlaneRect.y -= CONTROL_PLANE_SPEED;
+                        break;
+                    case SDLK_DOWN:
+                        myPlaneRect.y += CONTROL_PLANE_SPEED;
+                        break;
+                    case SDLK_LEFT:
+                        myPlaneRect.x -= CONTROL_PLANE_SPEED;
+                        break;
+                    case SDLK_RIGHT:
+                        myPlaneRect.x += CONTROL_PLANE_SPEED;
+                        break;
                 }
             }
             else if (e.type == SDL_MOUSEBUTTONDOWN && gameOver) {
@@ -237,10 +235,6 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
-
-        // Giới hạn biên của máy bay
-        myPlaneRect.y = std::max(0, std::min(myPlaneRect.y, WINDOW_HEIGHT - PLANE_HEIGHT));
-        myPlaneRect.x = std::max(0, std::min(myPlaneRect.x, WINDOW_WIDTH - PLANE_WIDTH));
 
         if (!gameOver) {
             // Cập nhật vị trí và tốc độ các tảng đá di chuyển
@@ -283,10 +277,8 @@ int main(int argc, char* argv[]) {
         renderText(renderer, font, "Score: " + std::to_string(elapsedTime / 1000), 10, 10);
 
         if (gameOver) {
-
-            Uint32 finalTime = elapsedTime;
             // Vẽ bảng thông báo
-            renderText(renderer, font, "Score: " + std::to_string(elapsedTime / 1000), WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2 - 60);
+            renderText(renderer, font, "Game Over! Score: " + std::to_string(elapsedTime / 1000), WINDOW_WIDTH / 2 - 100, WINDOW_HEIGHT / 2 - 60);
 
             // Vẽ nút chơi lại
             replayButtonRect = { WINDOW_WIDTH / 2 - BUTTON_WIDTH / 2, WINDOW_HEIGHT / 2 + 10, BUTTON_WIDTH, BUTTON_HEIGHT };
