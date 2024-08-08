@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #include <iostream>
 #include <vector>
 #include <cstdlib> // Để sử dụng rand()
@@ -43,6 +44,7 @@ std::vector<Plane> movingRocks;
 bool gameOver = false;
 Uint32 startTime;
 Uint32 endTime;
+Mix_Chunk* crashSound = nullptr; // Biến cho âm thanh va chạm
 
 // Hàm để vẽ văn bản lên màn hình
 void renderText(SDL_Renderer* renderer, TTF_Font* font, const std::string &text, int x, int y) {
@@ -97,6 +99,14 @@ int main(int argc, char* argv[]) {
     // Khởi tạo SDL_ttf
     if (TTF_Init() == -1) {
         std::cerr << "TTF_Init: %s\n" << TTF_GetError();
+        SDL_Quit();
+        return 1;
+    }
+
+    // Khởi tạo SDL_mixer
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+        std::cerr << "SDL_mixer could not initialize! SDL_mixer Error: " << Mix_GetError() << std::endl;
+        TTF_Quit();
         SDL_Quit();
         return 1;
     }
@@ -176,6 +186,41 @@ int main(int argc, char* argv[]) {
         SDL_Quit();
         return 1;
     }
+
+    // Tải âm thanh nền
+    Mix_Music* backgroundMusic = Mix_LoadMUS("background_music.mp3");
+    if (backgroundMusic == nullptr) {
+        std::cerr << "Failed to load background music! SDL_mixer Error: " << Mix_GetError() << std::endl;
+        SDL_DestroyTexture(rockTexture);
+        SDL_DestroyTexture(myPlaneTexture);
+        SDL_DestroyTexture(backgroundTexture);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        Mix_CloseAudio();
+        TTF_Quit();
+        SDL_Quit();
+        return 1;
+    }
+
+    // Tải âm thanh va chạm
+    crashSound = Mix_LoadWAV("crash_sound.wav");
+    if (crashSound == nullptr) {
+        std::cerr << "Failed to load crash sound effect! SDL_mixer Error: " << Mix_GetError() << std::endl;
+        Mix_FreeMusic(backgroundMusic);
+        SDL_DestroyTexture(rockTexture);
+        SDL_DestroyTexture(myPlaneTexture);
+        SDL_DestroyTexture(backgroundTexture);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        Mix_CloseAudio();
+        TTF_Quit();
+        SDL_Quit();
+        
+        return 1;
+    }
+
+    // Phát âm thanh nền
+    Mix_PlayMusic(backgroundMusic, -1);
 
     // Hàm khởi tạo trò chơi
     auto initializeGame = [&]() {
@@ -258,6 +303,8 @@ int main(int argc, char* argv[]) {
                 if (checkCollision(myPlaneRect, rock.rect)) {
                     gameOver = true;
                     endTime = SDL_GetTicks(); // Lưu thời điểm kết thúc
+                    Mix_PlayChannel(-1, crashSound, 0); // Phát âm thanh va chạm
+                    Mix_HaltMusic(); // Dừng âm thanh nền khi trò chơi kết thúc
                     break;
                 }
             }
@@ -305,6 +352,9 @@ int main(int argc, char* argv[]) {
     }
 
     // Giải phóng tài nguyên
+    Mix_FreeMusic(backgroundMusic);
+    Mix_FreeChunk(crashSound); // Giải phóng âm thanh
+    Mix_CloseAudio(); // Đóng audio
     TTF_CloseFont(font);
     SDL_DestroyTexture(rockTexture);
     SDL_DestroyTexture(myPlaneTexture);
