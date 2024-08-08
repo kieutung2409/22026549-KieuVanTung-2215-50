@@ -15,7 +15,7 @@ const int PLANE_WIDTH = 60;
 const int PLANE_HEIGHT = 60;
 
 // Tốc độ di chuyển ban đầu của tảng đá
-const int INITIAL_ROCK_SPEED = 3;
+const int INITIAL_ROCK_SPEED = 5;
 
 // Tốc độ tối đa của tảng đá
 const int MAX_ROCK_SPEED = 15;
